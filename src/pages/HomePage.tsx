@@ -1,16 +1,59 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { AnnouncementList } from "@/components/AnnouncementList";
 import { StatsSummary } from "@/components/StatsSummary";
-import { announcements } from "@/data/announcements";
 import { Announcement, AnnouncementType } from "@/types";
+import { useAnnouncements } from "@/hooks/use-announcements";
+import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<AnnouncementType | 'all'>('all');
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { getAnnouncements } = useAnnouncements();
+  const { toast } = useToast();
+  
+  // Fetch announcements from Supabase
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getAnnouncements();
+        
+        // Transform data to match the Announcement type
+        const formattedAnnouncements: Announcement[] = data.map((item: any) => ({
+          id: item.id,
+          type: item.type as AnnouncementType,
+          itemType: item.item_type,
+          title: item.title,
+          description: item.description,
+          location: item.location,
+          date: item.date,
+          contactInfo: item.contact_info,
+          imageUrl: item.image_url,
+          createdAt: item.created_at,
+          isResolved: item.is_resolved || false
+        }));
+        
+        setAnnouncements(formattedAnnouncements);
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les annonces",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, [getAnnouncements, toast]);
   
   // Filter announcements by tab
   const filteredAnnouncements = announcements.filter((announcement) => {
@@ -84,14 +127,22 @@ export default function HomePage() {
             </div>
           </div>
           
-          <AnnouncementList announcements={filteredAnnouncements.slice(0, 6)} />
-          
-          {filteredAnnouncements.length > 6 && (
-            <div className="mt-8 text-center">
-              <Link to="/recherche">
-                <Button variant="outline">Voir plus d'annonces</Button>
-              </Link>
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">Chargement des annonces...</p>
             </div>
+          ) : (
+            <>
+              <AnnouncementList announcements={filteredAnnouncements.slice(0, 6)} />
+              
+              {filteredAnnouncements.length > 6 && (
+                <div className="mt-8 text-center">
+                  <Link to="/recherche">
+                    <Button variant="outline">Voir plus d'annonces</Button>
+                  </Link>
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>

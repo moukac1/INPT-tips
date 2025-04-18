@@ -2,44 +2,53 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { AnnouncementFilters } from "@/components/AnnouncementFilters";
 import { AnnouncementList } from "@/components/AnnouncementList";
-import { announcements as allAnnouncements } from "@/data/announcements";
-import { Announcement, AnnouncementType, ItemType } from "@/types";
+import { useAnnouncements } from "@/hooks/use-announcements";
+import { Announcement, AnnouncementType } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SearchPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [filters, setFilters] = useState({
-    search: '',
-    type: 'all' as AnnouncementType | 'all',
-    itemType: 'all' as ItemType | 'all'
-  });
-
+  const [isLoading, setIsLoading] = useState(true);
+  const { getAnnouncements } = useAnnouncements();
+  const { toast } = useToast();
+  
   useEffect(() => {
-    // Apply filters
-    const filteredAnnouncements = allAnnouncements.filter((announcement) => {
-      // Filter by search term
-      const matchesSearch = !filters.search || 
-        announcement.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        announcement.description.toLowerCase().includes(filters.search.toLowerCase()) ||
-        announcement.location.toLowerCase().includes(filters.search.toLowerCase());
-      
-      // Filter by announcement type
-      const matchesType = filters.type === 'all' || announcement.type === filters.type;
-      
-      // Filter by item type
-      const matchesItemType = filters.itemType === 'all' || announcement.itemType === filters.itemType;
-      
-      return matchesSearch && matchesType && matchesItemType && !announcement.isResolved;
-    });
+    const fetchAnnouncements = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getAnnouncements();
+        
+        // Transform data to match the Announcement type
+        const formattedAnnouncements: Announcement[] = data.map((item: any) => ({
+          id: item.id,
+          type: item.type as AnnouncementType,
+          itemType: item.item_type,
+          title: item.title,
+          description: item.description,
+          location: item.location,
+          date: item.date,
+          contactInfo: item.contact_info,
+          imageUrl: item.image_url,
+          createdAt: item.created_at,
+          isResolved: item.is_resolved || false
+        }));
+        
+        setAnnouncements(formattedAnnouncements);
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les annonces",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    // Sort by date, newest first
-    const sortedAnnouncements = [...filteredAnnouncements].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    
-    setAnnouncements(sortedAnnouncements);
-  }, [filters]);
+    fetchAnnouncements();
+  }, [getAnnouncements, toast]);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -47,26 +56,15 @@ export default function SearchPage() {
       
       <main className="flex-1 bg-retrouve-gray">
         <div className="container py-8 md:py-12">
-          <h1 className="text-2xl md:text-3xl font-bold mb-8">Rechercher des annonces</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-6">Recherche d'annonces</h1>
           
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
-              <AnnouncementFilters onFilterChange={setFilters} />
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">Chargement des annonces...</p>
             </div>
-            
-            <div className="lg:col-span-3">
-              <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-medium">Résultats de recherche</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {announcements.length} {announcements.length > 1 ? 'annonces' : 'annonce'}
-                  </span>
-                </div>
-                
-                <AnnouncementList announcements={announcements} />
-              </div>
-            </div>
-          </div>
+          ) : (
+            <AnnouncementList announcements={announcements} />
+          )}
         </div>
       </main>
       
