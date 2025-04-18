@@ -2,9 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { Announcement } from '@/types';
 
+// Default values for development - these will be replaced with actual values in production
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-project.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-public-anon-key';
+
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
 
 export const useAnnouncements = () => {
