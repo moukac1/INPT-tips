@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -16,11 +15,13 @@ import {
 } from "@/components/ui/select";
 import { AnnouncementType, ItemType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAnnouncements } from "@/hooks/use-announcements";
 
 export default function PublishPage() {
   const { search } = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createAnnouncement } = useAnnouncements();
   
   // Form state
   const [type, setType] = useState<AnnouncementType>('lost');
@@ -41,7 +42,7 @@ export default function PublishPage() {
     }
   }, [search]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Form validation
@@ -56,15 +57,32 @@ export default function PublishPage() {
     
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      await createAnnouncement({
+        type,
+        itemType,
+        title,
+        description,
+        location,
+        date,
+        contactInfo,
+        imageUrl: undefined, // We'll handle image upload later
+      });
+
       toast({
         title: "Annonce publiée avec succès",
-        description: "Votre annonce a été soumise et sera visible après validation.",
+        description: "Votre annonce a été enregistrée et sera visible après validation.",
       });
       navigate("/");
+    } catch (error) {
+      toast({
+        title: "Erreur lors de la publication",
+        description: "Une erreur est survenue lors de la publication de l'annonce. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
