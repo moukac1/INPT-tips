@@ -61,7 +61,17 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+        // Retrouv'Moi custom colors
+        retrouve: {
+          blue: '#3b82f6',
+          green: '#10b981',
+          red: '#ef4444',
+          gray: '#f3f4f6',
+          'blue-dark': '#2563eb',
+          'green-dark': '#059669',
+          'red-dark': '#dc2626'
+        }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
