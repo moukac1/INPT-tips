@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AnnouncementType, ItemType } from "@/types";
+import { AnnouncementType, ItemType, Announcement } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAnnouncements } from "@/hooks/use-announcements";
 
@@ -21,7 +21,7 @@ export default function PublishPage() {
   const { search } = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createAnnouncement } = useAnnouncements();
+  const { createAnnouncement, getAnnouncements } = useAnnouncements();
   
   // Form state
   const [type, setType] = useState<AnnouncementType>('lost');
@@ -32,6 +32,7 @@ export default function PublishPage() {
   const [date, setDate] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   // Set initial type based on URL query parameter
   useEffect(() => {
@@ -41,6 +42,31 @@ export default function PublishPage() {
       setType(typeParam);
     }
   }, [search]);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      const data = await getAnnouncements();
+      if (data) {
+        // Transformer les données du format snake_case vers camelCase pour correspondre à l'interface Announcement
+        const transformedData = data.map(item => ({
+          id: item.id,
+          type: item.type as AnnouncementType,
+          itemType: item.item_type as ItemType,
+          title: item.title,
+          description: item.description,
+          location: item.location,
+          date: item.date,
+          contactInfo: item.contact_info,
+          imageUrl: item.image_url,
+          createdAt: item.created_at,
+          isResolved: item.is_resolved
+        }));
+        setAnnouncements(transformedData);
+      }
+    };
+  
+    fetchAnnouncements();
+  }, [getAnnouncements]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +84,7 @@ export default function PublishPage() {
     setIsSubmitting(true);
     
     try {
-      await createAnnouncement({
+      const newAnnouncement = await createAnnouncement({
         type,
         itemType,
         title,
@@ -68,11 +94,31 @@ export default function PublishPage() {
         contactInfo,
         imageUrl: undefined, // We'll handle image upload later
       });
-
+    
+      if (newAnnouncement) {
+        // Transformer le nouvel objet d'annonce pour correspondre à l'interface Announcement
+        const transformedAnnouncement = {
+          id: newAnnouncement.id,
+          type: newAnnouncement.type as AnnouncementType,
+          itemType: newAnnouncement.item_type as ItemType,
+          title: newAnnouncement.title,
+          description: newAnnouncement.description,
+          location: newAnnouncement.location,
+          date: newAnnouncement.date,
+          contactInfo: newAnnouncement.contact_info,
+          imageUrl: newAnnouncement.image_url,
+          createdAt: newAnnouncement.created_at,
+          isResolved: newAnnouncement.is_resolved
+        };
+        
+        setAnnouncements((prev: Announcement[]) => [...prev, transformedAnnouncement]);
+      }
+    
       toast({
         title: "Annonce publiée avec succès",
         description: "Votre annonce a été enregistrée et sera visible après validation.",
       });
+    
       navigate("/");
     } catch (error) {
       toast({

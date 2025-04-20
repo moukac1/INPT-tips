@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { announcements } from "@/data/announcements";
 
 interface AnnouncementCardProps {
   announcement: Announcement;

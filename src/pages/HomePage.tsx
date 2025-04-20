@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -6,9 +5,23 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { AnnouncementList } from "@/components/AnnouncementList";
 import { StatsSummary } from "@/components/StatsSummary";
-import { Announcement, AnnouncementType } from "@/types";
+import { Announcement, AnnouncementType, ItemType } from "@/types";
 import { useAnnouncements } from "@/hooks/use-announcements";
 import { useToast } from "@/hooks/use-toast";
+
+type AnnouncementData = {
+  id: string;
+  type: string;
+  item_type: string;
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  contact_info: string;
+  image_url?: string;
+  created_at: string;
+  is_resolved?: boolean;
+};
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<AnnouncementType | 'all'>('all');
@@ -25,10 +38,10 @@ export default function HomePage() {
         const data = await getAnnouncements();
         
         // Transform data to match the Announcement type
-        const formattedAnnouncements: Announcement[] = data.map((item: any) => ({
+        const formattedAnnouncements: Announcement[] = data.map((item: AnnouncementData) => ({
           id: item.id,
           type: item.type as AnnouncementType,
-          itemType: item.item_type,
+          itemType: item.item_type as ItemType,
           title: item.title,
           description: item.description,
           location: item.location,
@@ -72,7 +85,7 @@ export default function HomePage() {
               Retrouv'Moi
             </h1>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Plateforme de pertes et retrouvailles de l'établissement. Signalez un objet perdu ou trouvé pour faciliter les retrouvailles.
+              Plateforme de pertes et retrouvailles de l'INPT. Signalez un objet perdu ou trouvé pour faciliter les retrouvailles.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/publier?type=lost">
@@ -127,22 +140,13 @@ export default function HomePage() {
             </div>
           </div>
           
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">Chargement des annonces...</p>
+          <AnnouncementList announcements={filteredAnnouncements} />
+          {announcements.length > 6 && (
+            <div className="mt-8 text-center">
+              <Link to="/recherche">
+                <Button variant="outline">Voir plus d'annonces</Button>
+              </Link>
             </div>
-          ) : (
-            <>
-              <AnnouncementList announcements={filteredAnnouncements.slice(0, 6)} />
-              
-              {filteredAnnouncements.length > 6 && (
-                <div className="mt-8 text-center">
-                  <Link to="/recherche">
-                    <Button variant="outline">Voir plus d'annonces</Button>
-                  </Link>
-                </div>
-              )}
-            </>
           )}
         </section>
       </main>

@@ -10,7 +10,7 @@ export function AnnouncementList({ announcements }: AnnouncementListProps) {
   if (announcements.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg text-muted-foreground">Aucune annonce trouvée</p>
+        <p className=" text-success">loading...</p>
       </div>
     );
   }

@@ -5,13 +5,34 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, MapPin, Mail, User } from "lucide-react";
-import { announcements } from "@/data/announcements";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+
+
 
 export default function AnnouncementDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const announcement = announcements.find((a) => a.id === id);
+  const [announcement, setAnnouncement] = useState(null);
 
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('id', id)
+        .single();
+  
+      if (error) {
+        setAnnouncement(null);
+      } else {
+        setAnnouncement(data);
+      }
+    };
+  
+    if (id) fetchAnnouncement();
+  }, [id]);
+  
   if (!announcement) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -28,7 +49,7 @@ export default function AnnouncementDetailPage() {
     );
   }
 
-  const { type, itemType, title, description, location, date, contactInfo, imageUrl, createdAt } = announcement;
+  const { type, itemType, title, description, location, date, contact_info, imageUrl, createdAt } = announcement;
 
   const typeColorClass = type === 'lost' 
     ? 'bg-retrouve-red text-white hover:bg-retrouve-red-dark' 
@@ -39,7 +60,6 @@ export default function AnnouncementDetailPage() {
     'animal': 'Animal',
     'person': 'Personne'
   }[itemType];
-
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -106,21 +126,9 @@ export default function AnnouncementDetailPage() {
               <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
                 <h2 className="text-lg font-medium mb-4">Contact</h2>
                 
-                <div className="flex items-center gap-2 mb-4">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Publié par</p>
-                    <p className="font-medium">Membre de l'établissement</p>
-                  </div>
-                </div>
                 
-                <div className="flex items-center gap-2 mb-6">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Date de publication</p>
-                    <p className="font-medium">{new Date(createdAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
+                
+          
                 
                 <div className="border-t pt-4">
                   <p className="mb-4 text-sm">Pour entrer en contact concernant cette annonce :</p>
@@ -131,20 +139,12 @@ export default function AnnouncementDetailPage() {
                   </Button>
                   
                   <p className="text-xs text-muted-foreground text-center">
-                    Email: {contactInfo}
+                    Email ou tel: {contact_info}
                   </p>
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-lg font-medium mb-4">Signaler</h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Vous avez trouvé cet objet ou avez des informations importantes à communiquer ?
-                </p>
-                <Button variant="outline" className="w-full">
-                  Signaler un problème
-                </Button>
-              </div>
+              
             </div>
           </div>
         </div>
